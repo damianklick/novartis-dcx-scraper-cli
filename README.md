@@ -31,6 +31,6 @@ To install node dependenccies navigate to app directory and run `npm install`.
 
 ## Tips and maintenance
 
-* Make sure to use __dashes (-)__ instead of spaces when naming a site
+* Make sure to use **dashes (-)** instead of spaces when naming a site
 * When adding a new site, make sure to follow an alphabetical order
-* Adhere to the following naming convention for screenshot maps files: __brand-name-type.csv__
+* Adhere to the following naming convention for screenshot maps files: **brand-name-type.csv**
