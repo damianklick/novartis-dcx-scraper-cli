@@ -111,8 +111,6 @@ inquirer
             exec(`/usr/local/bin/wget -e robots=off --user-agent=\"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.3) Gecko/2008092416 Firefox/3.0.3\" --mirror --convert-links --adjust-extension --page-requisites --reject=\"pdf,mp4\" --no-parent ${selectedUrl} -P ${typeDir} > /dev/null 2>&1`, function() {
                 console.log("Cleaning files...");
                 exec("bash replace.sh", function() {
-                    //Renaming scraped site dir
-                    //fs.renameSync(`${typeDir}/${selectedUrl}, ${nameDir}`);
                     spinner.succeed("Site scraped!!!");
                 })
             })
