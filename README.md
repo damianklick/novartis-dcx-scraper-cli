@@ -25,9 +25,9 @@ To install node dependenccies navigate to app directory and run `npm install`.
 1. To start run `npm start`
 2. Select the site brand from the list (to cancel the selection step press `ctrl+c`)
 3. Select the site you want to scrape from the list (to cancel the selection step press `ctrl+c`) 
-    * Please see image below on how to read these options:
-4. Site will be scrapped
-5. `git add, commit and push` changes
+4. Enter the url you want to scrape (don't include `http://`, `https://`, or trailing slashes `/`
+5. Site will be scrapped
+6. `git add, commit and push` changes
 
 ## Tips and maintenance
 
