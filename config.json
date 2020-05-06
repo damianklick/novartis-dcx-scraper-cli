@@ -1,0 +1,40 @@
+{
+	"products": [
+		{
+			"brand": "sandostatin",
+			"type": "consumer",
+			"name": "gateway",
+			"date": "Wed May 06 2020 10:57:17 GMT-0400 (Eastern Daylight Time)"
+		},
+		{
+			"brand": "sandostatin",
+			"type": "consumer",
+			"name": "acromegaly",
+			"date": "Wed May 06 2020 10:57:17 GMT-0400 (Eastern Daylight Time)"
+		},
+		{
+			"brand": "sandostatin",
+			"type": "consumer",
+			"name": "carcinoid",
+			"date": "Wed May 06 2020 13:41:22 GMT-0400 (Eastern Daylight Time)"
+		},
+		{
+			"brand": "sandostatin",
+			"type": "hcp",
+			"name": "gateway",
+			"date": "Wed May 06 2020 10:57:17 GMT-0400 (Eastern Daylight Time)"
+		},
+		{
+			"brand": "sandostatin",
+			"type": "hcp",
+			"name": "acromegaly",
+			"date": "Wed May 06 2020 10:57:17 GMT-0400 (Eastern Daylight Time)"
+		},
+		{
+			"brand": "sandostatin",
+			"type": "hcp",
+			"name": "carcinoid",
+			"date": "Wed May 06 2020 13:24:10 GMT-0400 (Eastern Daylight Time)"
+		}
+	]
+}
