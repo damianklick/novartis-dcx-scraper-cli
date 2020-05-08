@@ -5,13 +5,6 @@ const ora = require("ora");
 
 const scrapeFunctions = {
 
-    //Checks if WGET is installed
-    checkWGET: () => {
-        exec("which madeup", (error, stdout, stderr) => {
-            return error;
-        })
-    },
-
     //Builds and array with all the brands from config file
     brandsArrBuilder: (configObj) => {
         let allBrandsArr = [];
@@ -37,7 +30,7 @@ const scrapeFunctions = {
     //Updates the screenshot map replacing the url in the file
     ssmUpdate: (originFile, destFile, replacementData) => {
         if(fs.existsSync(originFile)) {
-            console.log("Updating screenshot map...");
+            console.log("✅ Updating screenshot map...\n ");
             if(fs.existsSync(destFile)) {
                 fs.unlinkSync(destFile);
             };
@@ -46,14 +39,14 @@ const scrapeFunctions = {
             fs.writeFileSync(destFile, ssmData);
         }
         else {
-            console.log("Screenshot map doesn't exist. Please update and try again.")
+            console.log("❌ Screenshot map doesn't exist. Please update and try again\n ")
             return null;
         };
     },
 
     //Creates the directories structure if needed. Deletes last scraped site
     dirStucture: (brandDir, typeDir) => {
-        console.log("Setting up directories...");
+        console.log("✅ Setting up directories...\n ");
         if(!fs.existsSync(brandDir)) {
             fs.mkdirSync(brandDir);
         };
@@ -61,20 +54,20 @@ const scrapeFunctions = {
             fs.mkdirSync(typeDir);
         }
         else {
-            console.log("Removing current content...");
+            console.log("✅ Removing current content...\n ");
             fs.rmdirSync(typeDir, {recursive: true});
         };
     },
 
     //Creates an sh file to clean the output html files
     fileCleaner: (rootDir , targetDir, rulesObj) => {
-         console.log("Cleaning files...")
+         console.log("✅ Updating replace.sh...\n ")
         fs.writeFileSync("./replace.sh", `find ${rootDir}${targetDir} -name '*.html' -exec sed -i '' -e 's|${rulesObj["rule1"]}||g' -e 's|${rulesObj["rule2"]}||g' -e 's|${rulesObj["rule3"]}||g' -e 's|${rulesObj["rule4"]}||g' -e 's|${rulesObj["rule5"]}||g' -e 's|   ||g' {} \\;`);
     },
 
     //Updates the date and url in the config file for the targeted site
     configUpdater: (configObj, index, newDate, newUrl) => {
-        console.log("Updating config file date and url...");
+        console.log("✅ Updating config file date and url...\n ");
         configObj["products"][index]["date"] = newDate;
         configObj["products"][index]["url"] = newUrl;
         fs.writeFileSync("./config.json", JSON.stringify(configObj, null, "\t"));
@@ -84,11 +77,12 @@ const scrapeFunctions = {
     siteScraper: (url, rootDir, outputDir, kinetiqUrl) => {
         const spinner = ora(`Scraping ${url}...`).start();
         exec(`/usr/local/bin/wget -e robots=off --user-agent=\"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.3) Gecko/2008092416 Firefox/3.0.3\" --mirror --convert-links --adjust-extension --page-requisites --reject=\"pdf,mp4\" --no-parent ${url} -P ${outputDir} > /dev/null 2>&1`, () => {
-            console.log("Cleaning files...");
+            spinner.stop();
+            console.log("✅ Cleaning files...\n ");
             exec(`bash replace.sh`, () => {
-                spinner.succeed("Site scraped!!!");
-                console.log(`To view the scraped site locally go to: \n${rootDir}${outputDir}/${url}/index.html`);
-                console.log(`After deploying your changes to Kinetiq you can go to:\n${kinetiqUrl}/${outputDir}/${url}/index.html`);
+                console.log("✅ SITE SCRAPED!!! \n");
+                console.log(`💻 To view the scraped site locally go to: \n${rootDir}${outputDir}/${url}/index.html\n `);
+                console.log(`🌐 After deploying your changes to Kinetiq you can go to:\n${kinetiqUrl}/${outputDir}/${url}/index.html\n `);
             })
         })
     },

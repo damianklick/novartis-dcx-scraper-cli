@@ -3,6 +3,8 @@ const inquirer = require("inquirer");
 const path = require("path");
 const sites = require("./config.json");
 const scraper = require("./functions");
+const { exec } = require("child_process");
+
 
 //object for scrape function
 const scrapeObj = {
@@ -29,73 +31,100 @@ const scrapeObj = {
     }
 };
 
-//first question
-inquirer
-    .prompt([
-        {
-            type: "list",
-            name: "brand",
-            message: "Please select a brand:",
-            choices: scraper.brandsArrBuilder(scrapeObj.configObj["products"]),
-        },
-    ])
-    .then(answers => {
-        console.log(`Your choice: ${answers.brand}`);
-        scrapeObj.selectedBrand = answers.brand;
+(() => {
 
-        //second question
-        inquirer
-            .prompt([
-                {
-                    type: "list",
-                    name: "site",
-                    message: "Please select a site:",
-                    choices: scraper.sitesArrBuilder(scrapeObj.configObj["products"], scrapeObj.selectedBrand),
+    //Checking NodeJS
+    exec("node --version", (error, stdout, stderr) => {
+        if (error !== null || stdout.replace("v", "") < "12.10.0") {
+            console.log("❌ Please install NodeJS version 12.10.0 or up\n ");
+            return null;
+        }
+        else {
+            console.log("✅ NodeJS verified\n ")
+
+            //Checking WGET
+            exec("which wget", (error, stdout, stderr) => {
+                if (error !== null) {
+                    console.log("❌ Please install WGET\n ");
+                    return null;
                 }
-            ])
-            .then(answers => {
-                console.log(`Your choice: ${answers.site}`);
-                scrapeObj.selectedIndex = parseInt(answers.site.split("---")[0].split("ID: ")[1]);
-                scrapeObj.selectedType = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["type"];
-                scrapeObj.selectedName = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["name"];
-                scrapeObj.selectedUrl = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["url"];
+                else {
+                    console.log("✅ WGET verified\n ")
 
-                //third question
-                inquirer
-                    .prompt([
-                        {
-                            type: "list",
-                            name: "currentUrl",
-                            message: `The last scraped URL for this site is: ${scrapeObj.selectedUrl}, do you want to use the same one?`,
-                            choices: ["Yes, use the same URL", "No, provide a new URL"]
-                        }
-                    ])
-                    .then(answers => {
+                    //first question
+                    inquirer
+                        .prompt([
+                            {
+                                type: "list",
+                                name: "brand",
+                                message: "Please select a brand:",
+                                choices: scraper.brandsArrBuilder(scrapeObj.configObj["products"]),
+                            },
+                        ])
+                        .then(answers => {
+                            console.log(`\nℹ️ Your choice: ${answers.brand}\n `);
+                            scrapeObj.selectedBrand = answers.brand;
 
-                        scrapeObj.ssmOrigin = `${scrapeObj.ssmDir}/${scrapeObj.selectedBrand}-${scrapeObj.selectedName}-${scrapeObj.selectedType}.csv`
-                        scrapeObj.brandDir = `_sites/${scrapeObj.selectedBrand}`;
-                        scrapeObj.typeDir = `${scrapeObj.brandDir}/${scrapeObj.selectedType}`;
-
-                        if (answers.currentUrl === "Yes, use the same URL") {
-                            scraper.startScrapeProcess(scrapeObj); //Scraping process starts
-
-                        }
-                        else {
-
-                            //fourth question (optional)
+                            //second question
                             inquirer
                                 .prompt([
                                     {
-                                        type: "input",
-                                        name: "newUrl",
-                                        message: "Enter the new URL to be scraped (don't include http://, https://, or trailing slash (/)"
+                                        type: "list",
+                                        name: "site",
+                                        message: "Please select a site:",
+                                        choices: scraper.sitesArrBuilder(scrapeObj.configObj["products"], scrapeObj.selectedBrand),
                                     }
                                 ])
                                 .then(answers => {
-                                    scrapeObj.selectedUrl = answers.newUrl;
-                                    scraper.startScrapeProcess(scrapeObj); //Scraping process starts
-                                })
-                        };
-                    });
-            });
-    });
+                                    console.log(`\nℹ️ Your choice: ${answers.site}\n `);
+                                    scrapeObj.selectedIndex = parseInt(answers.site.split("---")[0].split("ID: ")[1]);
+                                    scrapeObj.selectedType = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["type"];
+                                    scrapeObj.selectedName = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["name"];
+                                    scrapeObj.selectedUrl = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["url"];
+
+                                    //third question
+                                    inquirer
+                                        .prompt([
+                                            {
+                                                type: "list",
+                                                name: "currentUrl",
+                                                message: `The last scraped URL for this site is: ${scrapeObj.selectedUrl}, do you want to use the same one?`,
+                                                choices: ["Yes, use the same URL", "No, provide a new URL"]
+                                            }
+                                        ])
+                                        .then(answers => {
+
+                                            scrapeObj.ssmOrigin = `${scrapeObj.ssmDir}/${scrapeObj.selectedBrand}-${scrapeObj.selectedName}-${scrapeObj.selectedType}.csv`
+                                            scrapeObj.brandDir = `_sites/${scrapeObj.selectedBrand}`;
+                                            scrapeObj.typeDir = `${scrapeObj.brandDir}/${scrapeObj.selectedType}`;
+
+                                            if (answers.currentUrl === "Yes, use the same URL") {
+                                                console.log(`\nℹ️ Your choice: ${scrapeObj.selectedUrl}\n `);
+                                                scraper.startScrapeProcess(scrapeObj); //Scraping process starts
+
+                                            }
+                                            else {
+
+                                                //fourth question (optional)
+                                                inquirer
+                                                    .prompt([
+                                                        {
+                                                            type: "input",
+                                                            name: "newUrl",
+                                                            message: "Enter the new URL to be scraped (don't include http://, https://, or trailing slash (/)"
+                                                        }
+                                                    ])
+                                                    .then(answers => {
+                                                        scrapeObj.selectedUrl = answers.newUrl;
+                                                        console.log(`\nℹ️ Your choice: ${scrapeObj.selectedUrl}\n `);
+                                                        scraper.startScrapeProcess(scrapeObj); //Scraping process starts
+                                                    })
+                                            };
+                                        });
+                                });
+                        });
+                }
+            })
+        }
+    })
+})();
