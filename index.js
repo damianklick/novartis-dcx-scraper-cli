@@ -85,7 +85,6 @@ inquirer
             //Creating directory structure
             let brandDir = `_sites/${selectedBrand}`;
             let typeDir = `${brandDir}/${selectedType}`;
-            let nameDir = `${typeDir}/${selectedName}`;
             console.log("Setting up directories...");
             if(!fs.existsSync(brandDir)) {
                 fs.mkdirSync(brandDir);
@@ -101,9 +100,11 @@ inquirer
             //Creating shell script to replace script tags in html files
             fs.writeFileSync("./replace.sh", `find ${root}${typeDir} -name '*.html' -exec sed -i '' -e 's|<input*.*__RequestVerificationToken*.*>||g' -e 's|<script*.*adobetrackingdb*.*/script>||g' -e 's|<script*.*assets\.adobe*.*/script>||g' -e 's|<script*.*window\.NREUM*.*/script>||g' -e 's|<script*.*_satellite*.*/script>||g' -e 's|   ||g' {} \\;`);
 
-            //Updating date
+
+            //Updating date and URL
             console.log("Updating date...");
             sites.products[selectedIndex]["date"] = date.toString();
+            sites.products[selectedIndex]["url"] = "";
             fs.writeFileSync("./config.json", JSON.stringify(sites, null, "\t"));
 
             //Scraping site
