@@ -1,120 +1,101 @@
-const inquirer = require ("inquirer");
-const {exec} = require ("child_process");
-const fs = require ("fs");
+//Modules
+const inquirer = require("inquirer");
 const path = require("path");
-const ora = require("ora");
 const sites = require("./config.json");
-const date = new Date();
+const scraper = require("./functions");
 
-const root = path.join(__dirname + "/");
-const rawBrands = sites.products;
-const allBrands = [];
-const allSites= [];
-
-rawBrands.forEach(site => {
-    if(!allBrands.includes(site.brand)){
-        allBrands.push(site.brand);
+//object for scrape function
+const scrapeObj = {
+    kinetiqUrl: "kinetiqurl.com",
+    newDate: (new Date()).toString(),
+    configObj: sites,
+    root: path.join(__dirname + "/"),
+    ssmDir: "./screenshotmap",
+    ssmOrigin: "",
+    ssmDest: "./screenshotmap.csv",
+    selectedBrand: "",
+    selectedIndex: "",
+    selectedName: "",
+    selectedType: "",
+    selectedUrl: "",
+    brandDir: "",
+    typeDir: "",
+    replacementRules: {
+        rule1: "<input*.*__RequestVerificationToken*.*>",
+        rule2: "<script*.*adobetrackingdb*.*/script>",
+        rule3: "<script*.*assets\.adobe*.*/script>",
+        rule4: "<script*.*window\.NREUM*.*/script>",
+        rule5: "<script*.*_satellite*.*/script>"
     }
-});
+};
 
 //first question
 inquirer
-.prompt([
-    {
-        type: "list",
-        name: "brand",
-        message: "Please select a brand:",
-        choices: allBrands,
-    },
-])
-.then(answers => {
-    let selectedBrand = answers.brand;
-    console.log(`Your choice: ${selectedBrand}`);
-    rawBrands.forEach((site, index) => {
-        if(site.brand === selectedBrand) {
-            allSites.push(`ID: ${index} --- SITE: ${site.name} --- TYPE: ${site.type} --- LAST MODIFIED: ${site.date}`);
-        };
-    });
-    //second question
-    inquirer
     .prompt([
         {
             type: "list",
-            name: "site",
-            message: "Please select a site:",
-            choices: allSites,
-        }
+            name: "brand",
+            message: "Please select a brand:",
+            choices: scraper.brandsArrBuilder(scrapeObj.configObj["products"]),
+        },
     ])
     .then(answers => {
-        console.log(`Your choice: ${answers.site}`);
-        let selectedIndex = parseInt(answers.site.split("---")[0].split("ID: ")[1]);
-        let selectedType = rawBrands[selectedIndex]["type"];
-        let selectedName = rawBrands[selectedIndex]["name"];
-        //third question
+        console.log(`Your choice: ${answers.brand}`);
+        scrapeObj.selectedBrand = answers.brand;
+
+        //second question
         inquirer
-        .prompt([
-            {
-                type: "input",
-                name: "url",
-                message: "Please enter url to be scraped (don't include http ot https)"
-            }
-        ])
-        .then(answers => {
-            let selectedUrl = answers.url;
-            console.log(`Your input: ${selectedUrl}`);
+            .prompt([
+                {
+                    type: "list",
+                    name: "site",
+                    message: "Please select a site:",
+                    choices: scraper.sitesArrBuilder(scrapeObj.configObj["products"], scrapeObj.selectedBrand),
+                }
+            ])
+            .then(answers => {
+                console.log(`Your choice: ${answers.site}`);
+                scrapeObj.selectedIndex = parseInt(answers.site.split("---")[0].split("ID: ")[1]);
+                scrapeObj.selectedType = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["type"];
+                scrapeObj.selectedName = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["name"];
+                scrapeObj.selectedUrl = scrapeObj.configObj["products"][scrapeObj.selectedIndex]["url"];
 
-            //Updating screenshot map
-            console.log("Updating screenshot map...");
-            let ssmDir = "./screenshotmap";
-            let ssmOriginFile = `${selectedBrand}-${selectedName}-${selectedType}.csv`;
-            let ssmDestFile = "./screenshotmap.csv";
+                //third question
+                inquirer
+                    .prompt([
+                        {
+                            type: "list",
+                            name: "currentUrl",
+                            message: `The last scraped URL for this site is: ${scrapeObj.selectedUrl}, do you want to use the same one?`,
+                            choices: ["Yes, use the same URL", "No, provide a new URL"]
+                        }
+                    ])
+                    .then(answers => {
 
-            if(fs.existsSync(`${ssmDir}/${ssmOriginFile}`)) {
-                if(fs.existsSync(ssmDestFile)) {
-                    fs.unlinkSync(ssmDestFile);
-                };
-                let ssmData = fs.readFileSync(`${ssmDir}/${ssmOriginFile}`).toString();
-                ssmData = ssmData.replace(/placeholderurl/g, selectedUrl);
-                fs.writeFileSync(ssmDestFile, ssmData);
-            }
-            else {
-                console.log("Screenshot map doesn't exist. Please update and try again.")
-                return null;
-            }
+                        scrapeObj.ssmOrigin = `${scrapeObj.ssmDir}/${scrapeObj.selectedBrand}-${scrapeObj.selectedName}-${scrapeObj.selectedType}.csv`
+                        scrapeObj.brandDir = `_sites/${scrapeObj.selectedBrand}`;
+                        scrapeObj.typeDir = `${scrapeObj.brandDir}/${scrapeObj.selectedType}`;
 
-            //Creating directory structure
-            let brandDir = `_sites/${selectedBrand}`;
-            let typeDir = `${brandDir}/${selectedType}`;
-            console.log("Setting up directories...");
-            if(!fs.existsSync(brandDir)) {
-                fs.mkdirSync(brandDir);
-            };
-            if(!fs.existsSync(typeDir)) {
-                fs.mkdirSync(typeDir);
-            }
-            else {
-                console.log("Removing current content...");
-                fs.rmdirSync(typeDir, {recursive: true});
-            };
+                        if (answers.currentUrl === "Yes, use the same URL") {
+                            scraper.startScrapeProcess(scrapeObj); //Scraping process starts
 
-            //Creating shell script to replace script tags in html files
-            fs.writeFileSync("./replace.sh", `find ${root}${typeDir} -name '*.html' -exec sed -i '' -e 's|<input*.*__RequestVerificationToken*.*>||g' -e 's|<script*.*adobetrackingdb*.*/script>||g' -e 's|<script*.*assets\.adobe*.*/script>||g' -e 's|<script*.*window\.NREUM*.*/script>||g' -e 's|<script*.*_satellite*.*/script>||g' -e 's|   ||g' {} \\;`);
+                        }
+                        else {
 
-
-            //Updating date and URL
-            console.log("Updating date...");
-            sites.products[selectedIndex]["date"] = date.toString();
-            sites.products[selectedIndex]["url"] = "";
-            fs.writeFileSync("./config.json", JSON.stringify(sites, null, "\t"));
-
-            //Scraping site
-            const spinner = ora(`Scraping: ${selectedUrl}...`).start();
-            exec(`/usr/local/bin/wget -e robots=off --user-agent=\"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.3) Gecko/2008092416 Firefox/3.0.3\" --mirror --convert-links --adjust-extension --page-requisites --reject=\"pdf,mp4\" --no-parent ${selectedUrl} -P ${typeDir} > /dev/null 2>&1`, function() {
-                console.log("Cleaning files...");
-                exec("bash replace.sh", function() {
-                    spinner.succeed("Site scraped!!!");
-                })
-            })
-        })
-    })
-})
+                            //fourth question (optional)
+                            inquirer
+                                .prompt([
+                                    {
+                                        type: "input",
+                                        name: "newUrl",
+                                        message: "Enter the new URL to be scraped (don't include http://, https://, or trailing slash (/)"
+                                    }
+                                ])
+                                .then(answers => {
+                                    scrapeObj.selectedUrl = answers.newUrl;
+                                    scraper.startScrapeProcess(scrapeObj); //Scraping process starts
+                                })
+                        };
+                    });
+            });
+    });

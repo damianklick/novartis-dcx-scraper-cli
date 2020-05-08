@@ -5,6 +5,13 @@ const ora = require("ora");
 
 const scrapeFunctions = {
 
+    //Checks if WGET is installed
+    checkWGET: () => {
+        exec("which madeup", (error, stdout, stderr) => {
+            return error;
+        })
+    },
+
     //Builds and array with all the brands from config file
     brandsArrBuilder: (configObj) => {
         let allBrandsArr = [];
